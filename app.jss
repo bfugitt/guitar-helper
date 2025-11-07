@@ -1,15 +1,13 @@
 // --- 1. CONFIGURATION ---
-// To add more chords, just add them to this array!
-// The app will automatically create the buttons.
+// I've updated this list to be the 15 most common open chords,
+// including the ones you've learned.
 const ALL_CHORDS = [
-    'A', 'Am', 'A7',
-    'B', 'Bm', 'B7',
-    'C', 'C7', 'Cadd9',
-    'D', 'Dm', 'D7',
-    'E', 'Em', 'E7',
-    'F', 'Fmaj7',
-    'G', 'G7'
-];
+    // Your learned chords
+    'A', 'Am', 'D', 'Dm', 'E', 'Em', 
+    
+    // Other common open chords
+    'A7', 'B7', 'C', 'Cadd9', 'D7', 'E7', 'Fmaj7', 'G', 'G7'
+].sort(); // .sort() keeps them in alphabetical order!
 
 
 // --- 2. APP STATE ---
@@ -21,6 +19,8 @@ let practiceInterval = null; // This will hold our timer (so we can stop it)
 // --- 3. DOM ELEMENTS ---
 // We get all the HTML elements we need to work with once the page loads.
 document.addEventListener('DOMContentLoaded', () => {
+    // This code ONLY runs *after* the whole index.html file is loaded
+    
     const grid = document.getElementById('chord-selection-grid');
     const display = document.getElementById('chord-display');
     const startBtn = document.getElementById('start-btn');
@@ -29,7 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 4. INITIALIZATION ---
     // Create the chord buttons when the page loads
-    populateChordGrid(grid);
+    if (grid) {
+        populateChordGrid(grid);
+    } else {
+        console.error("Error: Could not find the 'chord-selection-grid' element.");
+    }
 
     // --- 5. EVENT LISTENERS ---
     // We attach our functions to the buttons.
@@ -129,7 +133,7 @@ function generateNewPair(displayElement) {
 
     // Make sure the two chords are not the same
     while (index1 === index2) {
-        index2 = Math.floor(Math.random() * selectedChords.length);
+        index2 = Math.floor(Math.random() * selected.length);
     }
 
     const chord1 = selectedChords[index1];
