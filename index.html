@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Practice Helper</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="app-container">
+        <h1>Guitar Practice Helper</h1>
+
+        <fieldset>
+            <legend>1. Select Your Chords</legend>
+            <div id="chord-selection-grid">
+                </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>2. Set Timer & Start</legend>
+            <div class="controls">
+                <label for="timer-select">Change every:</label>
+                <select id="timer-select">
+                    <option value="5000">5 seconds</option>
+                    <option value="10000">10 seconds</option>
+                    <option value="30000" selected>30 seconds</option>
+                    <option value="60000">1 minute</option>
+                </select>
+                
+                <button id="start-btn">Start</button>
+                <button id="stop-btn">Stop</button>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>3. Practice!</legend>
+            <div id="chord-display">
+                Select chords and press "Start"
+            </div>
+        </fieldset>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
