@@ -16,25 +16,38 @@
             <div id="chord-selection-grid">
                 </div>
         </fieldset>
+        
+        <fieldset>
+            <legend>2. Metronome</legend>
+            <div class="metronome-controls">
+                <div class="slider-container">
+                    <label for="bpm-slider">BPM: <span id="bpm-display">80</span></label>
+                    <input type="range" id="bpm-slider" min="50" max="120" value="80">
+                </div>
+                <button id="mute-btn">Mute</button>
+            </div>
+        </fieldset>
 
         <fieldset>
-            <legend>2. Set Timer & Start</legend>
+            <legend>3. Set Timer & Start</legend>
             <div class="controls">
                 <label for="timer-select">Change every:</label>
                 <select id="timer-select">
                     <option value="5000">5 seconds</option>
                     <option value="10000">10 seconds</option>
+                    <option value="15000">15 seconds</option>
+                    <option value="20000">20 seconds</option>
+                    <option value="25000">25 seconds</option>
                     <option value="30000" selected>30 seconds</option>
-                    <option value="60000">1 minute</option>
                 </select>
                 
-                <button id="start-btn">Start</button>
-                <button id="stop-btn">Stop</button>
+                <button id="start-btn" class="btn-large">Start</button>
+                <button id="stop-btn" class="btn-large">Stop</button>
             </div>
         </fieldset>
 
         <fieldset>
-            <legend>3. Practice!</legend>
+            <legend>4. Practice!</legend>
             <div id="chord-display">
                 Select chords and press "Start"
             </div>
