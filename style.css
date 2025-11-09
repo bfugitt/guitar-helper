@@ -1,73 +1,140 @@
-/* ... (all your existing styles) ... */
+/* General page styling */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 1rem 0; /* Add padding for small screens */
+}
 
-/* --- NEW: Loop Toggle Switch Styles --- */
-.loop-control {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+#app-container {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    padding: 1rem 1.5rem; /* Adjusted padding */
+    width: 90%;
+    max-width: 600px;
+}
+
+h1 {
+    text-align: center;
+    color: #444;
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+fieldset {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+legend {
+    font-weight: 600;
+    color: #0056b3;
+    padding: 0 0.5em;
+    font-size: 1.1rem; /* Slightly larger */
+}
+
+/* Chord Selection Grid */
+#chord-selection-grid {
+    display: grid;
+    /* This creates a responsive grid of buttons */
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 10px;
-    margin-top: 15px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #555;
+    padding: 0.5rem 0;
 }
 
-/* The switch itself */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px; /* Smaller switch */
-    height: 28px;
-}
-
-/* Hide default HTML checkbox */
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-/* The slider */
-.slider {
-    position: absolute;
+.chord-btn {
+    padding: 12px 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    background-color: #f9f9f9;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
+    transition: all 0.2s ease;
+    user-select: none; /* Prevents text selection on double-click */
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
+.chord-btn:hover {
+    border-color: #999;
 }
 
-input:checked + .slider {
-    background-color: #28a745; /* Green for "on" */
+/* This is the magic class JavaScript will add/remove */
+.chord-btn.selected {
+    background-color: #007bff;
+    color: #ffffff;
+    border-color: #007bff;
 }
 
-input:checked + .slider:before {
-    transform: translateX(22px);
+/* --- Mode Selector --- */
+.mode-selector {
+    display: flex;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+.mode-selector input[type="radio"] {
+    display: none; /* Hide the actual radio button */
+}
+.mode-selector label {
+    flex: 1; /* Make labels take up equal space */
+    padding: 12px 10px;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: #f4f4f4;
+    transition: background-color 0.2s;
+}
+.mode-selector input[type="radio"]:checked + label {
+    background-color: #007bff;
+    color: white;
 }
 
-/* Rounded sliders */
-.slider.round {
-    border-radius: 34px;
+/* --- Hide/Show Panels --- */
+#progression-mode-panel {
+    display: none; /* Hidden by default */
 }
 
-.slider.round:before {
-    border-radius: 50%;
+/* --- Metronome Styles --- */
+.metronome-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    padding: 0.5rem 0;
 }
 
+.slider-container {
+    flex-grow: 1;
+}
+.slider-container label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+/* Make slider full-width */
+#bpm-slider {
+    width: 100%;
+}
 
-/* --- Other styles (no changes) --- */
-
-/* ... (rest of your CSS) ... */
+#mute-btn {
+    padding: 10px 15px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    background-color: #ffc107; /* Yellow */
+    border: 1px solid #e0a800;
+    color: #333;
+}
+/* Muted state */
+#mute-btn.muted {
+    background-color: #6c757d; /* Gray */
+    border
