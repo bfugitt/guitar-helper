@@ -18,7 +18,18 @@
         </fieldset>
         
         <fieldset>
-            <legend>2. Metronome</legend>
+            <legend>2. Select Mode</legend>
+            <div class="mode-selector">
+                <input type="radio" id="mode-random" name="mode" value="random" checked>
+                <label for="mode-random">Random</label>
+                
+                <input type="radio" id="mode-progression" name="mode" value="progression">
+                <label for="mode-progression">Progression</label>
+            </div>
+        </fieldset>
+        
+        <fieldset>
+            <legend>3. Metronome</legend>
             <div class="metronome-controls">
                 <div class="slider-container">
                     <label for="bpm-slider">BPM: <span id="bpm-display">80</span></label>
@@ -28,33 +39,54 @@
             </div>
         </fieldset>
 
+        <div id="random-mode-panel">
+            <fieldset>
+                <legend>4. Random Timer</legend>
+                <div class="controls">
+                    <label for="timer-select">Change every:</label>
+                    <select id="timer-select">
+                        <option value="5000">5 seconds</option>
+                        <option value="10000">10 seconds</option>
+                        <option value="15000">15 seconds</option>
+                        <option value="20000">20 seconds</option>
+                        <option value="25000">25 seconds</option>
+                        <option value="30000" selected>30 seconds</option>
+                    </select>
+                </div>
+            </fieldset>
+        </div>
+
+        <div id="progression-mode-panel">
+            <fieldset>
+                <legend>4. Song Generator</legend>
+                <div class="controls">
+                    <label for="key-select">Select Key:</label>
+                    <select id="key-select">
+                        <option value="A">A</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="G">G</option>
+                    </select>
+                    <button id="generate-btn" class="btn-secondary">Generate Song</button>
+                </div>
+                <div id="song-display">Select a key and generate a song...</div>
+            </fieldset>
+        </div>
+
         <fieldset>
-            <legend>3. Set Timer & Start</legend>
-            <div class="controls">
-                <label for="timer-select">Change every:</label>
-                <select id="timer-select">
-                    <option value="5000">5 seconds</option>
-                    <option value="10000">10 seconds</option>
-                    <option value="15000">15 seconds</option>
-                    <option value="20000">20 seconds</option>
-                    <option value="25000">25 seconds</option>
-                    <option value="30000" selected>30 seconds</option>
-                </select>
-                
+            <legend>Practice!</legend>
+            <div id="chord-display">
+                Select mode and press "Start"
+            </div>
+            <div class="controls start-stop-controls">
                 <button id="start-btn" class="btn-large">Start</button>
                 <button id="stop-btn" class="btn-large">Stop</button>
             </div>
         </fieldset>
 
-        <fieldset>
-            <legend>4. Practice!</legend>
-            <div id="chord-display">
-                Select chords and press "Start"
-            </div>
-        </fieldset>
-
     </div>
-
+    
     <script src="app.js"></script>
 </body>
 </html>
