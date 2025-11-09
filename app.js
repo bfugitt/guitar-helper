@@ -5,19 +5,11 @@ const ALL_CHORDS = [
 ].sort();
 
 // --- 2. PROGRESSION "DATABASES" ---
-const PROGRESSION_DATABASE = [
-    {
-        name: "12-Bar Blues",
-        length: 12,
-        progression: ['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'V'],
-        requiredTypes: ['I', 'IV', 'V']
-    },
-    {
-        name: "12-Bar Blues (Quick Change)",
-        length: 12,
-        progression: ['I', 'IV', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'V'],
-        requiredTypes: ['I', 'IV', 'V']
-    },
+
+// RENAMED and EXPANDED
+// We now have short phrases of 2 or 4 bars
+const PHRASE_DATABASE = [
+    // --- 4-Bar Phrases ---
     {
         name: "Doo-Wop / '50s",
         length: 4,
@@ -41,10 +33,47 @@ const PROGRESSION_DATABASE = [
         length: 4,
         progression: ['ii', 'V', 'I', 'I'],
         requiredTypes: ['I', 'ii', 'V']
+    },
+    {
+        name: "Simple Cadence",
+        length: 4,
+        progression: ['I', 'IV', 'V', 'I'],
+        requiredTypes: ['I', 'IV', 'V']
+    },
+    
+    // --- 2-Bar Phrases ---
+    {
+        name: "Amen (Plagal) Cadence",
+        length: 2,
+        progression: ['IV', 'I'],
+        requiredTypes: ['I', 'IV']
+    },
+    {
+        name: "Perfect Cadence",
+        length: 2,
+        progression: ['V', 'I'],
+        requiredTypes: ['I', 'V']
+    },
+    {
+        name: "Classic ii-V",
+        length: 2,
+        progression: ['ii', 'V'],
+        requiredTypes: ['ii', 'V']
+    },
+    {
+        name: "Verse to Chorus (IV-V)",
+        length: 2,
+        progression: ['IV', 'V'],
+        requiredTypes: ['IV', 'V']
+    },
+    {
+        name: "Minor Drop",
+        length: 2,
+        progression: ['I', 'vi'],
+        requiredTypes: ['I', 'vi']
     }
 ];
 
-// Added more chords to the keys to make it smarter
 const KEY_DATABASE = {
     'A': { 'I': 'A', 'ii': 'Bm', 'iii': 'C#m', 'IV': 'D', 'V': 'E', 'vi': 'F#m' },
     'C': { 'I': 'C', 'ii': 'Dm', 'iii': 'Em', 'IV': 'F', 'V': 'G', 'vi': 'Am' },
@@ -57,6 +86,7 @@ const KEY_DATABASE = {
 let selectedChords = [];
 let practiceInterval = null; 
 let currentMode = 'random'; 
+let loopMode = 'loop'; // 'loop' or 'regenerate'
 
 // --- 4. METRONOME STATE ---
 let audioContext;
@@ -69,7 +99,7 @@ const lookahead = 25.0;
 const scheduleAheadTime = 0.1;
 
 // --- 5. PROGRESSION STATE ---
-let generatedSong = []; // Will hold the translated chord names, e.g., ['G', 'C', 'D']
+let generatedSong = []; 
 let currentMeasure = 0; 
 let beatInMeasure = 1; 
 
@@ -83,8 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopBtn = document.getElementById('stop-btn');
     
     // Mode panels
-    const randomModePanel = document.getElementById('random-mode-panel');
-    const progressionModePanel = document.getElementById('progression-mode-panel');
     const modeRadios = document.querySelectorAll('input[name="mode"]');
     
     // Random mode controls
@@ -93,6 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Progression mode controls
     const generateBtn = document.getElementById('generate-btn');
     const songDisplay = document.getElementById('song-display');
+    const loopToggle = document.getElementById('loop-toggle'); // NEW
     
     // Metronome elements
     const bpmSlider = document.getElementById('bpm-slider');
@@ -111,14 +140,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Mode listeners
     modeRadios.forEach(radio => radio.addEventListener('change', () => {
         toggleModePanels();
-        // Fully stop and reset when switching modes
         stopPractice(display, songDisplay);
-        // Also clear the generated song when switching modes
         generatedSong = [];
     }));
     
     // Progression listeners
     generateBtn.addEventListener('click', () => generateSong(songDisplay));
+    // NEW: Listen to the loop toggle
+    loopToggle.addEventListener('change', (e) => {
+        loopMode = e.target.checked ? 'regenerate' : 'loop';
+    });
     
     // Metronome listeners
     bpmSlider.addEventListener('input', (e) => {
@@ -129,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// --- CHORD SELECTION ---
+// ... (populateChordGrid, handleChordClick, toggleModePanels functions are UNCHANGED) ...
 function populateChordGrid(gridElement) {
     gridElement.innerHTML = ''; 
     ALL_CHORDS.forEach(chord => {
@@ -141,7 +172,6 @@ function populateChordGrid(gridElement) {
         gridElement.appendChild(button);
     });
 }
-
 function handleChordClick(event) {
     const button = event.target;
     const chord = button.dataset.chord;
@@ -152,13 +182,10 @@ function handleChordClick(event) {
         selectedChords.push(chord);
     }
 }
-
-// --- MODE SWITCHING ---
 function toggleModePanels() {
     currentMode = document.querySelector('input[name="mode"]:checked').value;
     const randomPanel = document.getElementById('random-mode-panel');
     const progressionPanel = document.getElementById('progression-mode-panel');
-
     if (currentMode === 'random') {
         randomPanel.style.display = 'block';
         progressionPanel.style.display = 'none';
@@ -167,73 +194,52 @@ function toggleModePanels() {
         progressionPanel.style.display = 'block';
     }
 }
-
-// --- PRACTICE ROUTER (BUG FIXED) ---
-
-/**
- * Starts the correct practice mode.
- * The 'stop' calls are now handled more carefully.
- */
+// --- PRACTICE ROUTER (UNCHANGED) ---
 function startPractice(displayElement, timerElement) {
-    // 1. Stop any *currently running* timers
-    //    We NO LONGER call the full stopPractice() here, as that was the bug!
     clearInterval(practiceInterval);
     practiceInterval = null;
     stopMetronome();
     
-    // 2. Reset beat/measure counters
     currentMeasure = 0;
     beatInMeasure = 1;
 
-    // 3. Route to the correct mode
     if (currentMode === 'random') {
         startRandomPractice(displayElement, timerElement);
     } else {
         startProgressionPlayer(displayElement);
     }
 }
-
-/**
- * This is now ONLY for the "Stop" button.
- */
 function stopPractice(displayElement, songDisplayElement) {
-    // Stop timers
     clearInterval(practiceInterval);
     practiceInterval = null;
     stopMetronome();
     
-    // Reset progression player
     currentMeasure = 0;
     beatInMeasure = 1;
     
-    // We DON'T clear the generatedSong here, so the user can "Start" again.
-    // We only reset the song display text IF we are in progression mode
     if (currentMode === 'progression' && songDisplayElement) {
         songDisplayElement.textContent = "Select chords and generate a song...";
         generatedSong = []; // Clear the song *on stop*
     }
     
     displayElement.textContent = 'Practice Stopped.';
-    displayElement.classList.remove('visual-flash'); // Ensure flash is off
+    displayElement.classList.remove('visual-flash');
 }
 
 
-// --- RANDOM MODE LOGIC ---
+// --- RANDOM MODE LOGIC (UNCHANGED) ---
 function startRandomPractice(displayElement, timerElement) {
     if (selectedChords.length < 2) {
         displayElement.textContent = 'Select 2+ chords!';
         return;
     }
-    
     const duration = parseInt(timerElement.value, 10);
-    generateNewPair(displayElement); // Show first pair immediately
+    generateNewPair(displayElement);
     practiceInterval = setInterval(() => {
         generateNewPair(displayElement);
     }, duration);
-    
-    startMetronome(displayElement); // Start metronome
+    startMetronome(displayElement);
 }
-
 function generateNewPair(displayElement) {
     let index1 = Math.floor(Math.random() * selectedChords.length);
     let index2 = Math.floor(Math.random() * selectedChords.length);
@@ -247,86 +253,83 @@ function generateNewPair(displayElement) {
 // --- PROGRESSION MODE LOGIC (NEW & IMPROVED) ---
 
 /**
- * Smartly generates a song by checking all keys against selected chords.
+ * NEW: Generates a song by combining 4 random phrases.
  */
 function generateSong(songDisplayElement) {
-    let allPossibleSongs = [];
+    let allPossiblePhrases = [];
 
-    // Loop through every key in our database (e.g., 'A', 'C', 'G'...)
+    // Loop through every key
     for (const keyName of Object.keys(KEY_DATABASE)) {
         const keyChords = KEY_DATABASE[keyName];
 
-        // For this key, loop through all available progressions
-        for (const prog of PROGRESSION_DATABASE) {
+        // For this key, loop through all available phrases
+        for (const phrase of PHRASE_DATABASE) {
             
-            // Check if the user has selected all the chords required for this progression *in this key*
-            const progressionIsPossible = prog.requiredTypes.every(romanNumeral => {
+            // Check if the user has selected all the chords required for this phrase
+            const phraseIsPossible = phrase.requiredTypes.every(romanNumeral => {
                 const chordName = keyChords[romanNumeral];
                 return selectedChords.includes(chordName);
             });
 
-            // If yes, this is a valid song!
-            if (progressionIsPossible) {
+            // If yes, this is a valid phrase!
+            if (phraseIsPossible) {
                 // Translate the Roman numerals into actual chords
-                const songChords = prog.progression.map(romanNumeral => keyChords[romanNumeral] || '?');
+                const translatedProgression = phrase.progression.map(romanNumeral => keyChords[romanNumeral] || '?');
                 
-                // Add this song to our list of possibilities
-                allPossibleSongs.push({
+                allPossiblePhrases.push({
                     key: keyName,
-                    name: prog.name,
-                    progression: songChords
+                    name: phrase.name,
+                    progression: translatedProgression,
+                    length: phrase.length
                 });
             }
         }
     }
 
-    if (allPossibleSongs.length === 0) {
+    if (allPossiblePhrases.length === 0) {
         songDisplayElement.textContent = "No progressions found. Try selecting more chords (e.g., G, C, and D).";
         generatedSong = []; // Clear any old song
         return;
     }
 
-    // Pick one song at random from all the possibilities
-    const chosenSong = allPossibleSongs[Math.floor(Math.random() * allPossibleSongs.length)];
-    
-    // Set the global state
-    generatedSong = chosenSong.progression;
+    // --- NEW "SONG ASSEMBLY" LOGIC ---
+    generatedSong = []; // Clear the song
+    let songNames = [];
+    let totalBars = 0;
+    const PHRASES_PER_SONG = 4; // Let's make a song from 4 phrases
+
+    for (let i = 0; i < PHRASES_PER_SONG; i++) {
+        // Pick one phrase at random from all the possibilities
+        const chosenPhrase = allPossiblePhrases[Math.floor(Math.random() * allPossiblePhrases.length)];
+        
+        // Add its chords to the song
+        generatedSong.push(...chosenPhrase.progression);
+        
+        // Add its name for the display
+        songNames.push(chosenPhrase.name);
+        totalBars += chosenPhrase.length;
+    }
 
     // Display the song
-    songDisplayElement.textContent = `${chosenSong.name} (in ${chosenSong.key}): ${generatedSong.join(' → ')}`;
+    songDisplayElement.innerHTML = `<strong>${totalBars}-Bar Song Medley (in ${allPossiblePhrases[0].key}):</strong><br>${songNames.join('  →  ')}`;
 }
 
 /**
- * Starts the metronome and syncs chord changes to it.
+ * Starts the metronome and syncs chord changes to it. (Unchanged)
  */
 function startProgressionPlayer(displayElement) {
     if (generatedSong.length === 0) {
-        // This error check is now for the user
         displayElement.textContent = 'Generate a song first!';
         return;
     }
-
-    // Show the first chord immediately
     displayElement.textContent = generatedSong[currentMeasure];
-
-    // Start the metronome
     startMetronome(displayElement);
 }
 
-/**
- * This new function is called by the scheduler on beat 1.
- */
-function updateProgressionDisplay(displayElement) {
-    // Increment the measure, looping back to the start if we reach the end
-    currentMeasure = (currentMeasure + 1) % generatedSong.length;
-    
-    // Display the chord for the new measure
-    displayElement.textContent = generatedSong[currentMeasure];
-}
 
+// --- METRONOME LOGIC (Modified) ---
 
-// --- METRONOME LOGIC (Unchanged, but vital) ---
-
+// ... (initAudio, toggleMute, startMetronome, stopMetronome functions are UNCHANGED) ...
 function initAudio() {
     if (audioContext) return;
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -334,7 +337,6 @@ function initAudio() {
     gainNode.connect(audioContext.destination);
     gainNode.gain.setValueAtTime(isMuted ? 0 : 1, audioContext.currentTime);
 }
-
 function toggleMute(muteBtn) {
     isMuted = !isMuted;
     muteBtn.classList.toggle('muted', isMuted);
@@ -343,21 +345,19 @@ function toggleMute(muteBtn) {
         gainNode.gain.setValueAtTime(isMuted ? 0 : 1, audioContext.currentTime);
     }
 }
-
 function startMetronome(displayElement) {
     if (!audioContext) initAudio();
     audioContext.resume();
     nextNoteTime = audioContext.currentTime;
     metronomeInterval = setInterval(() => scheduler(displayElement), lookahead);
 }
-
 function stopMetronome() {
     clearInterval(metronomeInterval);
     metronomeInterval = null;
 }
 
 /**
-* The scheduler now also handles progression chord changes.
+* MODIFIED: The scheduler now handles the "loop" or "regenerate" logic.
 */
 function scheduler(displayElement) {
     while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
@@ -367,7 +367,6 @@ function scheduler(displayElement) {
         // --- Schedule Visuals ---
         const visualDelay = (nextNoteTime - audioContext.currentTime) * 1000;
         
-        // Schedule the visual flash
         setTimeout(() => {
             displayElement.classList.add('visual-flash');
             setTimeout(() => displayElement.classList.remove('visual-flash'), 100);
@@ -377,50 +376,6 @@ function scheduler(displayElement) {
         if (currentMode === 'progression' && beatInMeasure === 1) {
             // On beat 1, schedule the chord display to change
             setTimeout(() => {
-                // Check if we're at the *start* (beat 1, measure 0)
-                // If so, we DON'T update, because 'Start' already put the
-                // first chord up. This prevents a "double-tap" on the first chord.
-                if (currentMeasure !== 0) {
-                     updateProgressionDisplay(displayElement);
-                }
-            }, visualDelay);
-        }
-
-        // Advance to the next note time
-        const secondsPerBeat = 60.0 / currentBPM;
-        nextNoteTime += secondsPerBeat;
-        
-        // Advance the beat counter (loops 1, 2, 3, 4, 1...)
-        beatInMeasure = (beatInMeasure % 4) + 1;
-        
-        // If we've just finished beat 4, increment the measure
-        if (beatInMeasure === 1) {
-             currentMeasure = (currentMeasure + 1) % generatedSong.length;
-        }
-    }
-}
-
-// A small tweak to the scheduler logic
-function scheduler(displayElement) {
-    while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
-        // Schedule the audio click
-        scheduleNote(nextNoteTime);
-        
-        // --- Schedule Visuals ---
-        const visualDelay = (nextNoteTime - audioContext.currentTime) * 1000;
-        
-        setTimeout(() => {
-            displayElement.classList.add('visual-flash');
-            setTimeout(() => displayElement.classList.remove('visual-flash'), 100);
-        }, visualDelay);
-
-        // --- Progression Logic ---
-        if (currentMode === 'progression' && beatInMeasure === 1) {
-            // On beat 1, schedule the chord display to change
-            setTimeout(() => {
-                // This is simpler: just update the display to the current measure.
-                // 'startProgressionPlayer' already set it to measure 0.
-                // The scheduler will increment it *after* this beat.
                 displayElement.textContent = generatedSong[currentMeasure];
             }, visualDelay);
         }
@@ -435,10 +390,18 @@ function scheduler(displayElement) {
         // If we've just finished beat 4, increment the measure
         if (beatInMeasure === 1) {
              currentMeasure = (currentMeasure + 1) % generatedSong.length;
+             
+             // --- NEW LOOP LOGIC ---
+             // If we've just looped back to the *start* of the song...
+             if (currentMeasure === 0 && loopMode === 'regenerate') {
+                // ...and the toggle is set to "regenerate",
+                // make a new song *silently*.
+                // The scheduler will pick it up on the *next* beat.
+                generateSong(document.getElementById('song-display'));
+             }
         }
     }
 }
-
 
 function scheduleNote(time) {
     const osc = audioContext.createOscillator();
