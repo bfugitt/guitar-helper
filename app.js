@@ -4,74 +4,22 @@ const ALL_CHORDS = [
     'D', 'Dm', 'D7', 'E', 'Em', 'E7', 'F', 'Fmaj7', 'F#m', 'G', 'G7'
 ].sort();
 
-// --- 2. PROGRESSION "DATABASES" ---
-
-// RENAMED and EXPANDED
-// We now have short phrases of 2 or 4 bars
+// --- 2. PHRASE "DATABASE" (was PROGRESSION_DATABASE) ---
 const PHRASE_DATABASE = [
     // --- 4-Bar Phrases ---
-    {
-        name: "Doo-Wop / '50s",
-        length: 4,
-        progression: ['I', 'vi', 'IV', 'V'],
-        requiredTypes: ['I', 'vi', 'IV', 'V']
-    },
-    {
-        name: "Feel-Good / Pop",
-        length: 4,
-        progression: ['I', 'V', 'vi', 'IV'],
-        requiredTypes: ['I', 'V', 'vi', 'IV']
-    },
-    {
-        name: "Axis of Awesome",
-        length: 4,
-        progression: ['vi', 'IV', 'I', 'V'],
-        requiredTypes: ['vi', 'IV', 'I', 'V']
-    },
-    {
-        name: "Jazz ii-V-I",
-        length: 4,
-        progression: ['ii', 'V', 'I', 'I'],
-        requiredTypes: ['I', 'ii', 'V']
-    },
-    {
-        name: "Simple Cadence",
-        length: 4,
-        progression: ['I', 'IV', 'V', 'I'],
-        requiredTypes: ['I', 'IV', 'V']
-    },
-    
+    { name: "Doo-Wop / '50s", length: 4, progression: ['I', 'vi', 'IV', 'V'], requiredTypes: ['I', 'vi', 'IV', 'V'] },
+    { name: "Feel-Good / Pop", length: 4, progression: ['I', 'V', 'vi', 'IV'], requiredTypes: ['I', 'V', 'vi', 'IV'] },
+    { name: "Axis of Awesome", length: 4, progression: ['vi', 'IV', 'I', 'V'], requiredTypes: ['vi', 'IV', 'I', 'V'] },
+    { name: "Jazz ii-V-I", length: 4, progression: ['ii', 'V', 'I', 'I'], requiredTypes: ['I', 'ii', 'V'] },
+    { name: "Simple Cadence", length: 4, progression: ['I', 'IV', 'V', 'I'], requiredTypes: ['I', 'IV', 'V'] },
     // --- 2-Bar Phrases ---
-    {
-        name: "Amen (Plagal) Cadence",
-        length: 2,
-        progression: ['IV', 'I'],
-        requiredTypes: ['I', 'IV']
-    },
-    {
-        name: "Perfect Cadence",
-        length: 2,
-        progression: ['V', 'I'],
-        requiredTypes: ['I', 'V']
-    },
-    {
-        name: "Classic ii-V",
-        length: 2,
-        progression: ['ii', 'V'],
-        requiredTypes: ['ii', 'V']
-    },
-    {
-        name: "Verse to Chorus (IV-V)",
-        length: 2,
-        progression: ['IV', 'V'],
-        requiredTypes: ['IV', 'V']
-    },
-    {
-        name: "Minor Drop",
-        length: 2,
-        progression: ['I', 'vi'],
-        requiredTypes: ['I', 'vi']
-    }
+    { name: "Amen (Plagal) Cadence", length: 2, progression: ['IV', 'I'], requiredTypes: ['I', 'IV'] },
+    { name: "Perfect Cadence", length: 2, progression: ['V', 'I'], requiredTypes: ['I', 'V'] },
+    { name: "Classic ii-V", length: 2, progression: ['ii', 'V'], requiredTypes: ['ii', 'V'] },
+    { name: "Verse to Chorus (IV-V)", length: 2, progression: ['IV', 'V'], requiredTypes: ['IV', 'V'] },
+    { name: "Minor Drop", length: 2, progression: ['I', 'vi'], requiredTypes: ['I', 'vi'] },
+    // --- 12-Bar Blues ---
+    { name: "12-Bar Blues", length: 12, progression: ['I', 'I', 'I', 'I', 'IV', 'IV', 'I', 'I', 'V', 'IV', 'I', 'V'], requiredTypes: ['I', 'IV', 'V'] }
 ];
 
 const KEY_DATABASE = {
@@ -103,12 +51,13 @@ let generatedSong = [];
 let currentMeasure = 0; 
 let beatInMeasure = 1; 
 
+// --- 6. DOM ELEMENTS (NEW) ---
+// We define these here so we can access them from multiple functions
+let displayContainer, currentChordDisplay, nextChordDisplay, songDisplayElement;
 
-// --- 6. DOM ELEMENTS ---
 document.addEventListener('DOMContentLoaded', () => {
     // Get all the elements
     const grid = document.getElementById('chord-selection-grid');
-    const display = document.getElementById('chord-display');
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
     
@@ -120,33 +69,38 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Progression mode controls
     const generateBtn = document.getElementById('generate-btn');
-    const songDisplay = document.getElementById('song-display');
-    const loopToggle = document.getElementById('loop-toggle'); // NEW
+    const loopToggle = document.getElementById('loop-toggle'); 
     
     // Metronome elements
     const bpmSlider = document.getElementById('bpm-slider');
     const bpmDisplay = document.getElementById('bpm-display');
     const muteBtn = document.getElementById('mute-btn');
+    
+    // NEW: Assign global display elements
+    displayContainer = document.querySelector('.visual-flash-target');
+    currentChordDisplay = document.getElementById('current-chord-display');
+    nextChordDisplay = document.getElementById('next-chord-display');
+    songDisplayElement = document.getElementById('song-display');
 
     // --- 7. INITIALIZATION ---
     populateChordGrid(grid);
-    toggleModePanels(); 
+    toggleModePanels(); // This will also hide/show next-chord display
+    stopPractice(); // Set the initial "..." text
 
     // --- 8. EVENT LISTENERS ---
     // Practice listeners
-    startBtn.addEventListener('click', () => startPractice(display, timerSelect));
-    stopBtn.addEventListener('click', () => stopPractice(display, songDisplay));
+    startBtn.addEventListener('click', () => startPractice(timerSelect));
+    stopBtn.addEventListener('click', () => stopPractice());
     
     // Mode listeners
     modeRadios.forEach(radio => radio.addEventListener('change', () => {
         toggleModePanels();
-        stopPractice(display, songDisplay);
+        stopPractice();
         generatedSong = [];
     }));
     
     // Progression listeners
-    generateBtn.addEventListener('click', () => generateSong(songDisplay));
-    // NEW: Listen to the loop toggle
+    generateBtn.addEventListener('click', () => generateSong());
     loopToggle.addEventListener('change', (e) => {
         loopMode = e.target.checked ? 'regenerate' : 'loop';
     });
@@ -160,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// ... (populateChordGrid, handleChordClick, toggleModePanels functions are UNCHANGED) ...
+// --- CHORD SELECTION ---
 function populateChordGrid(gridElement) {
     gridElement.innerHTML = ''; 
     ALL_CHORDS.forEach(chord => {
@@ -182,81 +136,99 @@ function handleChordClick(event) {
         selectedChords.push(chord);
     }
 }
+
+// --- MODE SWITCHING (UPDATED) ---
 function toggleModePanels() {
     currentMode = document.querySelector('input[name="mode"]:checked').value;
     const randomPanel = document.getElementById('random-mode-panel');
     const progressionPanel = document.getElementById('progression-mode-panel');
+
     if (currentMode === 'random') {
         randomPanel.style.display = 'block';
         progressionPanel.style.display = 'none';
+        nextChordDisplay.style.display = 'none'; // Hide next chord
     } else {
         randomPanel.style.display = 'none';
         progressionPanel.style.display = 'block';
+        nextChordDisplay.style.display = 'block'; // Show next chord
     }
 }
-// --- PRACTICE ROUTER (UNCHANGED) ---
-function startPractice(displayElement, timerElement) {
+
+// --- PRACTICE ROUTER (UPDATED) ---
+function startPractice(timerElement) {
+    // 1. Stop any currently running timers
     clearInterval(practiceInterval);
     practiceInterval = null;
     stopMetronome();
     
+    // 2. Reset beat/measure counters
     currentMeasure = 0;
     beatInMeasure = 1;
 
+    // 3. Route to the correct mode
     if (currentMode === 'random') {
-        startRandomPractice(displayElement, timerElement);
+        startRandomPractice(timerElement);
     } else {
-        startProgressionPlayer(displayElement);
+        startProgressionPlayer();
     }
 }
-function stopPractice(displayElement, songDisplayElement) {
+
+function stopPractice() {
+    // Stop timers
     clearInterval(practiceInterval);
     practiceInterval = null;
     stopMetronome();
     
+    // Reset progression player
     currentMeasure = 0;
     beatInMeasure = 1;
     
-    if (currentMode === 'progression' && songDisplayElement) {
+    if (currentMode === 'progression') {
         songDisplayElement.textContent = "Select chords and generate a song...";
         generatedSong = []; // Clear the song *on stop*
     }
     
-    displayElement.textContent = 'Practice Stopped.';
-    displayElement.classList.remove('visual-flash');
+    currentChordDisplay.textContent = '...';
+    nextChordDisplay.textContent = '';
+    displayContainer.classList.remove('visual-flash');
 }
 
 
-// --- RANDOM MODE LOGIC (UNCHANGED) ---
-function startRandomPractice(displayElement, timerElement) {
+// --- RANDOM MODE LOGIC (UPDATED) ---
+function startRandomPractice(timerElement) {
     if (selectedChords.length < 2) {
-        displayElement.textContent = 'Select 2+ chords!';
+        currentChordDisplay.textContent = 'Select 2+ chords!';
         return;
     }
+    
     const duration = parseInt(timerElement.value, 10);
-    generateNewPair(displayElement);
+    generateNewPair(); // Show first pair immediately
     practiceInterval = setInterval(() => {
-        generateNewPair(displayElement);
+        generateNewPair();
     }, duration);
-    startMetronome(displayElement);
+    
+    startMetronome(); // Start metronome
 }
-function generateNewPair(displayElement) {
+
+function generateNewPair() {
     let index1 = Math.floor(Math.random() * selectedChords.length);
     let index2 = Math.floor(Math.random() * selectedChords.length);
     while (index1 === index2) {
         index2 = Math.floor(Math.random() * selectedChords.length);
     }
-    displayElement.textContent = `${selectedChords[index1]}  →  ${selectedChords[index2]}`;
+    // Update the main display only
+    currentChordDisplay.textContent = `${selectedChords[index1]}  →  ${selectedChords[index2]}`;
+    nextChordDisplay.textContent = ''; // No "next" in random mode
 }
 
 
 // --- PROGRESSION MODE LOGIC (NEW & IMPROVED) ---
 
 /**
- * NEW: Generates a song by combining 4 random phrases.
+ * NEW: Generates a *single song* from the database.
  */
-function generateSong(songDisplayElement) {
-    let allPossiblePhrases = [];
+function generateSong() {
+    let allPossibleSongs = [];
 
     // Loop through every key
     for (const keyName of Object.keys(KEY_DATABASE)) {
@@ -271,65 +243,58 @@ function generateSong(songDisplayElement) {
                 return selectedChords.includes(chordName);
             });
 
-            // If yes, this is a valid phrase!
+            // If yes, this is a valid song!
             if (phraseIsPossible) {
                 // Translate the Roman numerals into actual chords
                 const translatedProgression = phrase.progression.map(romanNumeral => keyChords[romanNumeral] || '?');
                 
-                allPossiblePhrases.push({
+                allPossibleSongs.push({
                     key: keyName,
                     name: phrase.name,
-                    progression: translatedProgression,
-                    length: phrase.length
+                    progression: translatedProgression
                 });
             }
         }
     }
 
-    if (allPossiblePhrases.length === 0) {
+    if (allPossibleSongs.length === 0) {
         songDisplayElement.textContent = "No progressions found. Try selecting more chords (e.g., G, C, and D).";
         generatedSong = []; // Clear any old song
         return;
     }
 
-    // --- NEW "SONG ASSEMBLY" LOGIC ---
-    generatedSong = []; // Clear the song
-    let songNames = [];
-    let totalBars = 0;
-    const PHRASES_PER_SONG = 4; // Let's make a song from 4 phrases
-
-    for (let i = 0; i < PHRASES_PER_SONG; i++) {
-        // Pick one phrase at random from all the possibilities
-        const chosenPhrase = allPossiblePhrases[Math.floor(Math.random() * allPossiblePhrases.length)];
-        
-        // Add its chords to the song
-        generatedSong.push(...chosenPhrase.progression);
-        
-        // Add its name for the display
-        songNames.push(chosenPhrase.name);
-        totalBars += chosenPhrase.length;
-    }
+    // --- NEW "SONG" LOGIC ---
+    // Pick ONE song at random from all the possibilities
+    const chosenSong = allPossibleSongs[Math.floor(Math.random() * allPossibleSongs.length)];
+    
+    // Set the global state
+    generatedSong = chosenSong.progression;
 
     // Display the song
-    songDisplayElement.innerHTML = `<strong>${totalBars}-Bar Song Medley (in ${allPossiblePhrases[0].key}):</strong><br>${songNames.join('  →  ')}`;
+    songDisplayElement.textContent = `${chosenSong.name} (in ${chosenSong.key}): ${generatedSong.join(' → ')}`;
 }
 
 /**
- * Starts the metronome and syncs chord changes to it. (Unchanged)
+ * Starts the metronome and syncs chord changes to it.
  */
-function startProgressionPlayer(displayElement) {
+function startProgressionPlayer() {
     if (generatedSong.length === 0) {
-        displayElement.textContent = 'Generate a song first!';
+        currentChordDisplay.textContent = 'Generate a song first!';
         return;
     }
-    displayElement.textContent = generatedSong[currentMeasure];
-    startMetronome(displayElement);
+    
+    // Set the initial display
+    let nextMeasure = (currentMeasure + 1) % generatedSong.length;
+    currentChordDisplay.textContent = generatedSong[currentMeasure];
+    nextChordDisplay.textContent = generatedSong[nextMeasure];
+
+    // Start the metronome
+    startMetronome();
 }
 
 
 // --- METRONOME LOGIC (Modified) ---
 
-// ... (initAudio, toggleMute, startMetronome, stopMetronome functions are UNCHANGED) ...
 function initAudio() {
     if (audioContext) return;
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -345,21 +310,23 @@ function toggleMute(muteBtn) {
         gainNode.gain.setValueAtTime(isMuted ? 0 : 1, audioContext.currentTime);
     }
 }
-function startMetronome(displayElement) {
+
+function startMetronome() {
     if (!audioContext) initAudio();
     audioContext.resume();
     nextNoteTime = audioContext.currentTime;
-    metronomeInterval = setInterval(() => scheduler(displayElement), lookahead);
+    metronomeInterval = setInterval(() => scheduler(), lookahead);
 }
+
 function stopMetronome() {
     clearInterval(metronomeInterval);
     metronomeInterval = null;
 }
 
 /**
-* MODIFIED: The scheduler now handles the "loop" or "regenerate" logic.
+* MODIFIED: The scheduler now handles "next chord" and "regenerate" logic.
 */
-function scheduler(displayElement) {
+function scheduler() {
     while (nextNoteTime < audioContext.currentTime + scheduleAheadTime) {
         // Schedule the audio click
         scheduleNote(nextNoteTime);
@@ -367,16 +334,23 @@ function scheduler(displayElement) {
         // --- Schedule Visuals ---
         const visualDelay = (nextNoteTime - audioContext.currentTime) * 1000;
         
+        // Schedule the visual flash
         setTimeout(() => {
-            displayElement.classList.add('visual-flash');
-            setTimeout(() => displayElement.classList.remove('visual-flash'), 100);
+            displayContainer.classList.add('visual-flash');
+            setTimeout(() => displayContainer.classList.remove('visual-flash'), 100);
         }, visualDelay);
 
         // --- Progression Logic ---
         if (currentMode === 'progression' && beatInMeasure === 1) {
             // On beat 1, schedule the chord display to change
             setTimeout(() => {
-                displayElement.textContent = generatedSong[currentMeasure];
+                // Get the 'next' measure index, looping around
+                let nextMeasure = (currentMeasure + 1) % generatedSong.length;
+                
+                // Update the text content
+                currentChordDisplay.textContent = generatedSong[currentMeasure];
+                nextChordDisplay.textContent = generatedSong[nextMeasure];
+                
             }, visualDelay);
         }
 
@@ -397,7 +371,7 @@ function scheduler(displayElement) {
                 // ...and the toggle is set to "regenerate",
                 // make a new song *silently*.
                 // The scheduler will pick it up on the *next* beat.
-                generateSong(document.getElementById('song-display'));
+                generateSong();
              }
         }
     }
