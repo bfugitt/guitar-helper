@@ -31,7 +31,7 @@ const KEY_DATABASE = {
 let selectedChords = [];
 let practiceInterval = null; 
 let currentMode = 'random'; 
-let loopMode = 'loop'; 
+// We no longer need the loopMode variable!
 
 // --- 4. METRONOME STATE ---
 let audioContext;
@@ -56,6 +56,7 @@ let beatInMeasure = 1;
 
 // --- 6. DOM ELEMENTS ---
 let displayContainer, currentChordDisplay, nextChordDisplay, songDisplayElement;
+let loopToggleElement; // NEW: We'll grab this once
 
 document.addEventListener('DOMContentLoaded', () => {
     // Get all the elements
@@ -65,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modeRadios = document.querySelectorAll('input[name="mode"]');
     const timerSelect = document.getElementById('timer-select');
     const generateBtn = document.getElementById('generate-btn');
-    const loopToggle = document.getElementById('loop-toggle'); 
     const bpmSlider = document.getElementById('bpm-slider');
     const bpmDisplay = document.getElementById('bpm-display');
     const muteBtn = document.getElementById('mute-btn');
@@ -74,6 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
     currentChordDisplay = document.getElementById('current-chord-display');
     nextChordDisplay = document.getElementById('next-chord-display');
     songDisplayElement = document.getElementById('song-display');
+    
+    // Get the loop toggle element
+    loopToggleElement = document.getElementById('loop-toggle'); 
 
     // --- 7. INITIALIZATION ---
     populateChordGrid(grid);
@@ -92,9 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     generateBtn.addEventListener('click', () => generateSong());
     
-    loopToggle.addEventListener('change', (e) => {
-        loopMode = e.target.checked ? 'regenerate' : 'loop';
-    });
+    // We don't need a listener for the loop toggle, we'll read it directly.
     
     bpmSlider.addEventListener('input', (e) => {
         currentBPM = parseInt(e.target.value, 10);
@@ -253,7 +254,7 @@ function startProgressionPlayer() {
     visualAndLogicLoop();
 }
 
-// --- METRONOME AUDIO (Unchanged) ---
+// --- METRONOME AUDIO (TYPO FIX) ---
 function initAudio() {
     if (audioContext) return;
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -289,7 +290,8 @@ function scheduler() {
 }
 
 function scheduleNote(time) {
-    const osc = audioTuning.createOscillator();
+    // THIS IS THE TYPO FIX
+    const osc = audioContext.createOscillator(); 
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(880, time);
     osc.connect(gainNode);
@@ -303,7 +305,6 @@ function visualAndLogicLoop() {
     
     const now = audioContext.currentTime;
 
-    // Check if it's time for the next beat's LOGIC
     if (now >= nextBeatTime) {
         
         // --- 1. Flash visual ---
@@ -312,7 +313,6 @@ function visualAndLogicLoop() {
 
         // --- 2. Update display logic (only on beat 1) ---
         if (beatInMeasure === 1) {
-            // On the downbeat, update the display to show the *current* measure
             let nextMeasure = (currentMeasure + 1) % generatedSong.length;
             currentChordDisplay.textContent = generatedSong[currentMeasure];
             nextChordDisplay.textContent = generatedSong[nextMeasure];
@@ -327,9 +327,9 @@ function visualAndLogicLoop() {
             // --- 4. CHECK FOR REGENERATE (THIS IS THE FIX) ---
             // We just advanced the measure, and it's now 0.
             // This means the song *just finished*.
-            if (currentMeasure === 0 && loopMode === 'regenerate') {
-                // Generate a new song. This new song will be
-                // picked up by the display logic on the *next* beat 1.
+            // We read the toggle's "checked" status *directly* from the DOM.
+            if (currentMeasure === 0 && loopToggleElement.checked) {
+                // .checked is true, which means "regenerate"
                 generateSong();
             }
         }
