@@ -70,7 +70,7 @@ legend {
     border-color: #007bff;
 }
 
-/* --- NEW: Mode Selector --- */
+/* Mode Selector */
 .mode-selector {
     display: flex;
     width: 100%;
@@ -95,7 +95,7 @@ legend {
     color: white;
 }
 
-/* --- NEW: Hide/Show Panels --- */
+/* Hide/Show Panels */
 #progression-mode-panel {
     display: none; /* Hidden by default */
 }
@@ -146,7 +146,7 @@ legend {
     flex-grow: 1;
 }
 
-/* --- NEW: Secondary Button Style --- */
+/* Secondary Button Style */
 .btn-secondary {
     padding: 10px 15px;
     font-size: 1rem;
@@ -159,7 +159,12 @@ legend {
     flex-grow: 1;
 }
 
-/* --- NEW: Song Display --- */
+/* --- NEW STYLE --- */
+.btn-full-width {
+    width: 100%;
+}
+
+/* Song Display */
 #song-display {
     padding: 10px;
     background-color: #f9f9f9;
