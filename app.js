@@ -145,59 +145,36 @@ function toggleModePanels() {
     }
 }
 
-// --- PRACTICE ROUTER (BUG FIX) ---
-
-/**
- * NEW: Helper function to ONLY stop the loops.
- * This function does NOT clear the song.
- */
+// --- PRACTICE ROUTER (Unchanged) ---
 function stopAllLoops() {
-    // Stop Random Mode timer
     clearInterval(practiceInterval);
     practiceInterval = null;
-    
-    // Stop Progression Mode loops
-    clearInterval(schedulerInterval); // Stops audio scheduler
+    clearInterval(schedulerInterval); 
     schedulerInterval = null;
-    cancelAnimationFrame(rafID); // Stops visual/logic loop
+    cancelAnimationFrame(rafID); 
     rafID = null;
 }
 
-/**
- * REFACTORED: startPractice now calls the "gentle" stop.
- */
 function startPractice(timerElement) {
-    // 1. Stop any and all previous loops
     stopAllLoops(); 
-    
-    // 2. Initialize audio context
     if (!audioContext) initAudio();
     audioContext.resume();
 
-    // 3. Reset counters and clocks
     currentMeasure = 0;
     beatInMeasure = 1;
     nextBeatTime = audioContext.currentTime; 
     nextNoteTime = audioContext.currentTime; 
 
-    // 4. Route to the correct mode
     if (currentMode === 'random') {
         startRandomPractice(timerElement);
     } else {
-        // This check will now pass, because generatedSong is not cleared
         startProgressionPlayer(); 
     }
 }
 
-/**
- * REFACTORED: stopPractice is for the "Stop" button.
- * It stops loops AND resets the state.
- */
 function stopPractice() {
-    // 1. Stop all the loops
     stopAllLoops();
     
-    // 2. Reset progression state (the part that was causing the bug)
     currentMeasure = 0;
     beatInMeasure = 1;
     if (currentMode === 'progression' && songDisplayElement) {
@@ -205,7 +182,6 @@ function stopPractice() {
         generatedSong = []; 
     }
     
-    // 3. Reset displays
     currentChordDisplay.textContent = '...';
     nextChordDisplay.textContent = '';
     displayContainer.classList.remove('visual-flash');
@@ -270,14 +246,10 @@ function startProgressionPlayer() {
         return;
     }
     
-    // Set the initial display (beat 1 of measure 0)
     currentChordDisplay.textContent = generatedSong[0];
     nextChordDisplay.textContent = generatedSong[1 % generatedSong.length];
 
-    // Start the audio scheduler loop
     startMetronome();
-    
-    // Start the visual/logic loop
     visualAndLogicLoop();
 }
 
@@ -303,7 +275,6 @@ function startMetronome() {
     schedulerInterval = setInterval(scheduler, lookahead);
 }
 
-// This function is now only called by stopAllLoops()
 function stopMetronome() {
     clearInterval(schedulerInterval);
     schedulerInterval = null;
@@ -318,7 +289,7 @@ function scheduler() {
 }
 
 function scheduleNote(time) {
-    const osc = audioContext.createOscillator();
+    const osc = audioTuning.createOscillator();
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(880, time);
     osc.connect(gainNode);
@@ -326,26 +297,22 @@ function scheduleNote(time) {
     osc.stop(time + 0.05);
 }
 
-// --- SYNCED VISUAL/LOGIC LOOP (Unchanged) ---
+// --- SYNCED VISUAL/LOGIC LOOP (BUG FIX) ---
 function visualAndLogicLoop() {
     rafID = requestAnimationFrame(visualAndLogicLoop);
     
     const now = audioContext.currentTime;
 
+    // Check if it's time for the next beat's LOGIC
     if (now >= nextBeatTime) {
-        // --- 1. This is the "on beat" logic ---
+        
+        // --- 1. Flash visual ---
         displayContainer.classList.add('visual-flash');
         setTimeout(() => displayContainer.classList.remove('visual-flash'), 100);
 
-        // --- 2. Update logic counters ---
+        // --- 2. Update display logic (only on beat 1) ---
         if (beatInMeasure === 1) {
-            
-            // Check for regenerate *before* displaying
-            if (currentMeasure === 0 && loopMode === 'regenerate' && nextBeatTime > audioContext.currentTime) {
-                generateSong();
-            }
-
-            // We are on the downbeat. Update the displays.
+            // On the downbeat, update the display to show the *current* measure
             let nextMeasure = (currentMeasure + 1) % generatedSong.length;
             currentChordDisplay.textContent = generatedSong[currentMeasure];
             nextChordDisplay.textContent = generatedSong[nextMeasure];
@@ -353,11 +320,21 @@ function visualAndLogicLoop() {
         
         // --- 3. Advance counters for the *next* loop ---
         beatInMeasure = (beatInMeasure % 4) + 1;
-        if (beatInMeasure === 1) {
+        if (beatInMeasure === 1) { // This means we just finished beat 4
+            // Advance the measure
             currentMeasure = (currentMeasure + 1) % generatedSong.length;
+            
+            // --- 4. CHECK FOR REGENERATE (THIS IS THE FIX) ---
+            // We just advanced the measure, and it's now 0.
+            // This means the song *just finished*.
+            if (currentMeasure === 0 && loopMode === 'regenerate') {
+                // Generate a new song. This new song will be
+                // picked up by the display logic on the *next* beat 1.
+                generateSong();
+            }
         }
 
-        // --- 4. Advance the logic clock ---
+        // --- 5. Advance the logic clock ---
         nextBeatTime += secondsPerBeat;
     }
 }
