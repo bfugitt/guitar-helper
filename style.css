@@ -7,14 +7,14 @@ body {
     place-items: center;
     min-height: 100vh;
     margin: 0;
-    padding: 1rem 0; /* Add padding for small screens */
+    padding: 1rem 0;
 }
 
 #app-container {
     background: #ffffff;
     border-radius: 10px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-    padding: 1rem 1.5rem; /* Adjusted padding */
+    padding: 1rem 1.5rem;
     width: 90%;
     max-width: 600px;
 }
@@ -36,7 +36,7 @@ legend {
     font-weight: 600;
     color: #0056b3;
     padding: 0 0.5em;
-    font-size: 2.1rem; /* Slightly larger.  was 1.1 */
+    font-size: 1.1rem;
 }
 
 /* Chord Selection Grid */
@@ -70,7 +70,37 @@ legend {
     border-color: #007bff;
 }
 
-/* --- NEW: Metronome Styles --- */
+/* --- NEW: Mode Selector --- */
+.mode-selector {
+    display: flex;
+    width: 100%;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+}
+.mode-selector input[type="radio"] {
+    display: none; /* Hide the actual radio button */
+}
+.mode-selector label {
+    flex: 1; /* Make labels take up equal space */
+    padding: 12px 10px;
+    text-align: center;
+    font-weight: 500;
+    cursor: pointer;
+    background-color: #f4f4f4;
+    transition: background-color 0.2s;
+}
+.mode-selector input[type="radio"]:checked + label {
+    background-color: #007bff;
+    color: white;
+}
+
+/* --- NEW: Hide/Show Panels --- */
+#progression-mode-panel {
+    display: none; /* Hidden by default */
+}
+
+/* Metronome Styles */
 .metronome-controls {
     display: flex;
     justify-content: space-between;
@@ -78,52 +108,36 @@ legend {
     gap: 20px;
     padding: 0.5rem 0;
 }
-
-.slider-container {
-    flex-grow: 1;
-}
-.slider-container label {
-    display: block;
-    font-weight: 500;
-    margin-bottom: 8px;
-}
-/* Make slider full-width */
-#bpm-slider {
-    width: 100%;
-}
-
+.slider-container { flex-grow: 1; }
+.slider-container label { display: block; font-weight: 500; margin-bottom: 8px; }
+#bpm-slider { width: 100%; }
 #mute-btn {
     padding: 10px 15px;
     font-size: 1rem;
     font-weight: 600;
     border-radius: 6px;
     cursor: pointer;
-    background-color: #ffc107; /* Yellow */
+    background-color: #ffc107;
     border: 1px solid #e0a800;
     color: #333;
 }
-/* Muted state */
 #mute-btn.muted {
-    background-color: #6c757d; /* Gray */
+    background-color: #6c757d;
     border-color: #5a6268;
     color: white;
 }
 
-
-/* --- UPDATED: Controls styling --- */
+/* Controls styling */
 .controls {
     display: flex;
     gap: 15px;
     align-items: center;
-    flex-wrap: wrap; /* Allow wrapping on small screens */
+    flex-wrap: wrap;
     padding: 0.5rem 0;
 }
-
 .controls label {
     font-weight: 500;
-    flex-basis: 100%; /* Make label take full width on wrap */
 }
-
 .controls select {
     padding: 10px 15px;
     font-size: 1rem;
@@ -132,32 +146,34 @@ legend {
     flex-grow: 1;
 }
 
-/* UPDATED: Larger Start/Stop buttons */
-.btn-large {
-    padding: 12px 15px;
-    font-size: 1.1rem;
+/* --- NEW: Secondary Button Style --- */
+.btn-secondary {
+    padding: 10px 15px;
+    font-size: 1rem;
     font-weight: 600;
-    cursor: pointer;
     border-radius: 6px;
-    flex-grow: 1; /* Make buttons grow to fill space */
-    min-width: 100px; /* Ensure they have a nice min-width */
-}
-
-#start-btn {
-    background-color: #28a745;
+    cursor: pointer;
+    background-color: #17a2b8; /* Teal */
     color: white;
-    border: 1px solid #28a745;
+    border: 1px solid #17a2b8;
+    flex-grow: 1;
 }
 
-#stop-btn {
-    background-color: #dc3545;
-    color: white;
-    border: 1px solid #dc3545;
+/* --- NEW: Song Display --- */
+#song-display {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin-top: 10px;
+    font-weight: 500;
+    color: #333;
+    text-align: center;
+    font-size: 1.1rem;
 }
 
-/* --- UPDATED: Main Display --- */
+/* Main Display & Start/Stop */
 #chord-display {
-    /* UPDATED: Bigger, responsive font size */
     font-size: clamp(3rem, 12vw, 5rem);
     font-weight: 700;
     text-align: center;
@@ -166,13 +182,20 @@ legend {
     background-color: #fdfdfd;
     border-radius: 6px;
     border: 2px dashed #eee;
-    /* Smooth transition for the flash */
     transition: background-color 0.1s ease-out;
 }
-
-/* --- NEW: Visual Flash Animation --- */
-/* This class will be added and removed by JavaScript */
-.visual-flash {
-    background-color: #e6f2ff; /* A light, noticeable blue */
-    border-color: #007bff;
+.start-stop-controls {
+    margin-top: 1rem;
 }
+.btn-large {
+    padding: 12px 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    flex-grow: 1;
+    min-width: 100px;
+}
+#start-btn { background-color: #28a745; color: white; border: 1px solid #28a745; }
+#stop-btn { background-color: #dc3545; color: white; border: 1px solid #dc3545; }
+.visual-flash { background-color: #e6f2ff; border-color: #007bff; }
